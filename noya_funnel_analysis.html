@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noya — Funnel & Traffic Source Analysis</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --line:#21262d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --red:#f85149; --amber:#d29922;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font:15px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:32px 20px;max-width:1000px;margin:0 auto}
+  h1{font-size:26px;font-weight:700;letter-spacing:-.3px}
+  h2{font-size:16px;font-weight:600;margin:30px 0 12px;color:var(--accent)}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .grid{display:grid;gap:14px;margin-top:18px}
+  .kpis{grid-template-columns:repeat(4,1fr)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+  .kpi .v{font-size:24px;font-weight:700}
+  .kpi .l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .delta{font-size:12px;font-weight:600;margin-top:4px}
+  .up{color:var(--green)} .down{color:var(--red)} .flat{color:var(--muted)}
+  .funnel{margin-top:10px}
+  .step{display:grid;grid-template-columns:120px 1fr 130px;align-items:center;gap:12px;padding:7px 0}
+  .step .name{font-size:13px;color:var(--muted)}
+  .bar{height:30px;background:linear-gradient(90deg,#1f6feb,#58a6ff);border-radius:6px;display:flex;align-items:center;padding-left:10px;font-size:13px;font-weight:600;color:#fff;min-width:42px;white-space:nowrap}
+  .step .conv{font-size:12px;color:var(--muted);text-align:right}
+  /* source bars */
+  .srow{display:grid;grid-template-columns:90px 1fr 1fr;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .srow:last-child{border-bottom:none}
+  .srow .s{font-size:13px;font-weight:600}
+  .track{position:relative;height:22px;background:#0d1117;border-radius:5px;overflow:hidden}
+  .fill{position:absolute;top:0;left:0;height:100%;border-radius:5px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:600;color:#fff}
+  .now{background:#1f6feb} .then{background:#30363d}
+  .chg{font-size:13px;font-weight:700;text-align:right;padding-right:4px}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+  th,td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  td.hl{color:var(--text);font-weight:600}
+  ul{margin:6px 0 0 18px} li{margin:6px 0}
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;margin-right:6px}
+  .tg{background:rgba(63,185,80,.15);color:var(--green)}
+  .tr{background:rgba(248,81,73,.15);color:var(--red)}
+  .ta{background:rgba(210,153,34,.15);color:var(--amber)}
+  .warn{border-left:3px solid var(--amber)}
+  footer{margin-top:30px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:14px}
+  .legend{font-size:11px;color:var(--muted);margin-top:6px}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 4px 0 10px;vertical-align:middle}
+</style>
+</head>
+<body>
+
+  <h1>Noya — Funnel &amp; Traffic Source Analysis</h1>
+  <div class="sub">Current week <strong>Jun 15–21, 2026</strong> vs same week last month <strong>(May 15–21)</strong> · GA4 funnel exploration</div>
+
+  <h2>This week at a glance</h2>
+  <div class="grid kpis">
+    <div class="card kpi"><div class="l">Sessions</div><div class="v">3,899</div><div class="delta down">▼ 55% vs May</div></div>
+    <div class="card kpi"><div class="l">Add to cart</div><div class="v">145</div><div class="delta down">▼ 65% vs May</div></div>
+    <div class="card kpi"><div class="l">Purchases</div><div class="v">46</div><div class="delta down">▼ 64% vs May</div></div>
+    <div class="card kpi"><div class="l">Session → Purchase</div><div class="v">1.18%</div><div class="delta down">▼ vs 1.47% May</div></div>
+  </div>
+
+  <h2>The funnel — Jun 15–21</h2>
+  <div class="card funnel">
+    <div class="step"><span class="name">Session start</span><div class="bar" style="width:100%">3,899</div><span class="conv">100%</span></div>
+    <div class="step"><span class="name">Page view</span><div class="bar" style="width:100%">3,899</div><span class="conv">→ next 3.7%</span></div>
+    <div class="step"><span class="name">Add to cart</span><div class="bar" style="width:3.7%">145</div><span class="conv">3.7% of views</span></div>
+    <div class="step"><span class="name">Checkout</span><div class="bar" style="width:2.2%">86</div><span class="conv">59% of ATC</span></div>
+    <div class="step"><span class="name">Purchase</span><div class="bar" style="width:1.2%">46</div><span class="conv">53% of checkout</span></div>
+  </div>
+  <div class="sub" style="margin-top:10px">Mid/lower funnel is healthy (ATC→checkout 59%, checkout→purchase 53%). The decline is driven almost entirely by <strong>fewer sessions arriving</strong> — an acquisition problem, not a conversion problem.</div>
+
+  <h2>Funnel stages across periods</h2>
+  <div class="card" style="overflow-x:auto">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:8px"><strong>Volumes and stage conversion</strong> — current week vs the 3 prior weeks.</div>
+    <table>
+      <thead><tr>
+        <th>Stage</th>
+        <th style="color:var(--accent)">Now (Jun 15–21)</th><th>Jun 8–14</th><th>Jun 1–7</th><th>May 15–21</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>Sessions</td><td class="hl">3,899</td><td>6,510</td><td>8,600</td><td>8,703</td></tr>
+        <tr><td>Add to cart</td><td class="hl">145</td><td>244</td><td>374</td><td>419</td></tr>
+        <tr><td>Checkout</td><td class="hl">86</td><td>115</td><td>183</td><td>212</td></tr>
+        <tr><td>Purchase</td><td class="hl">46</td><td>62</td><td>89</td><td>128</td></tr>
+        <tr style="border-top:2px solid var(--line)"><td>View → ATC</td><td class="hl">3.72%</td><td>3.75%</td><td>4.35%</td><td>4.81%</td></tr>
+        <tr><td>ATC → Checkout</td><td class="hl" style="color:var(--green)">59.3%</td><td>47.1%</td><td>48.9%</td><td>50.6%</td></tr>
+        <tr><td>Checkout → Purchase</td><td class="hl">53.5%</td><td>53.9%</td><td>48.6%</td><td>60.4%</td></tr>
+        <tr><td>Session → Purchase</td><td class="hl">1.18%</td><td>0.95%</td><td>1.03%</td><td>1.47%</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:13px;margin-top:12px">Every volume metric fell with sessions, but <strong>efficiency held or improved</strong>: ATC→Checkout is at its highest (59.3%) and Session→Purchase recovered to 1.18% from 0.95% last week. The one soft spot is <strong>View→ATC</strong>, easing from 4.81% a month ago to 3.72% — the top-of-funnel hook is the lever with the most upside.</p>
+  </div>
+
+  <h2>★ Where the traffic drop is coming from</h2>
+  <div class="card" style="overflow-x:auto">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:8px"><strong>Sessions by channel</strong> — current week vs each of the 3 prior periods. % columns = change of <strong>now</strong> vs that period.</div>
+    <table>
+      <thead><tr>
+        <th>Channel</th>
+        <th>May 15–21</th><th>May 31–Jun 6</th><th>Jun 7–14</th>
+        <th style="color:var(--accent)">Now (Jun 15–21)</th>
+        <th>vs −1mo</th><th>vs −2wk</th><th>vs last wk</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>Snapchat</td><td>1,807</td><td>2,548</td><td>3,261</td><td class="hl">478</td><td class="down">−74%</td><td class="down">−81%</td><td class="down">−85%</td></tr>
+        <tr><td>Direct</td><td>1,638</td><td>1,728</td><td>2,079</td><td class="hl">945</td><td class="down">−42%</td><td class="down">−45%</td><td class="down">−55%</td></tr>
+        <tr><td>Google</td><td>1,212</td><td>n/a</td><td>n/a</td><td class="hl">475</td><td class="down">−61%</td><td>—</td><td>—</td></tr>
+        <tr><td>TikTok</td><td>1,529</td><td>1,072</td><td>992</td><td class="hl">952</td><td class="down">−38%</td><td class="down">−11%</td><td class="flat">−4%</td></tr>
+        <tr><td>Instagram</td><td>1,361</td><td>916</td><td>715</td><td class="hl" style="color:var(--green)">969</td><td class="down">−29%</td><td class="up">+6%</td><td class="up">+35%</td></tr>
+        <tr style="border-top:2px solid var(--line)"><td class="hl">All sessions</td><td>8,703</td><td>7,439</td><td>8,407</td><td class="hl">3,899</td><td class="down">−55%</td><td class="down">−48%</td><td class="down">−54%</td></tr>
+      </tbody>
+    </table>
+    <div class="legend">Google was not broken out in the two most recent exports (n/a).</div>
+    <p style="font-size:13px;margin-top:12px"><strong>The pattern is consistent across all 3 periods:</strong> Snapchat is collapsing (−74% to −85%), Direct is steadily eroding (−42% to −55%), and Google is down −61%. TikTok is only modestly down (−4% vs last week). <strong>Instagram is actually growing</strong> — up +35% vs last week and +6% vs two weeks ago — and is now the #1 channel by sessions.</p>
+  </div>
+
+  <h2>Channel quality — who actually converts</h2>
+  <div class="card" style="overflow-x:auto">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:8px"><strong>Purchase conversion rate by channel</strong> (purchases ÷ sessions) across all 4 periods, plus this week's purchase count.</div>
+    <table>
+      <thead><tr>
+        <th>Channel</th>
+        <th>May 15–21</th><th>May 31–Jun 6</th><th>Jun 7–14</th>
+        <th style="color:var(--accent)">Now</th>
+        <th>Purch. now</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>Instagram</td><td>3.60%</td><td>2.62%</td><td>3.36%</td><td class="hl" style="color:var(--green)">2.37%</td><td class="hl" style="color:var(--green)">23</td></tr>
+        <tr><td>Direct</td><td>2.38%</td><td>1.33%</td><td>0.87%</td><td class="hl">1.16%</td><td>11</td></tr>
+        <tr><td>TikTok</td><td>0.52%</td><td>0.47%</td><td>0.40%</td><td class="hl">0.63%</td><td>6</td></tr>
+        <tr><td>Snapchat</td><td>1.11%</td><td>0.90%</td><td>0.49%</td><td class="hl">0.84%</td><td>4</td></tr>
+        <tr><td>Google</td><td>0.33%</td><td>n/a</td><td>n/a</td><td class="hl">0.42%</td><td>2</td></tr>
+        <tr style="border-top:2px solid var(--line)"><td class="hl">Total</td><td>1.47%</td><td>1.12%</td><td>0.89%</td><td class="hl">1.18%</td><td class="hl">46</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:13px;margin-top:12px"><strong>Instagram is the clear quality leader</strong> in every period (2.4–3.6% vs ~1% or below for the rest) and drives half of all purchases (23 of 46). <strong>Snapchat and Google convert poorly</strong> (under 1% in every period) — they buy volume, not revenue. TikTok is low-converting but at its best level of the four weeks (0.63%).</p>
+  </div>
+
+  <h2>Read-out</h2>
+  <div class="card">
+    <p><span class="tag tr">Root cause</span><strong>The drop is concentrated in paid social + Google.</strong> Snapchat lost ~1,330 sessions (−74%), Google −737 (−61%), TikTok −38%. These are your media-buying channels — the pattern points to reduced/paused ad spend or campaign delivery, not a site problem.</p>
+    <p style="margin-top:10px"><span class="tag tg">Strength</span><strong>Instagram is now your best channel</strong> — top by sessions (969) and by far the best converter (2.37% vs ~1% for others). It also held up best (−29%). It carries half of all purchases (23 of 46).</p>
+    <p style="margin-top:10px"><span class="tag ta">Hidden issue</span><strong>Snapchat &amp; Google buy traffic that barely converts</strong> (0.95% and 0.42%). Even before the drop they were low-efficiency. Spend lost there hurt volume but not much revenue.</p>
+  </div>
+
+  <h2>What to do</h2>
+  <div class="card">
+    <ul>
+      <li><strong>Fix Snapchat first.</strong> It's the largest and most consistent loss (−74% to −85% across every period). Check spend, pacing and paused/disapproved campaigns for Jun 15–21.</li>
+      <li><strong>Shift budget toward Instagram.</strong> It's the highest-ROI channel and already growing — scaling it recovers purchases faster than restoring low-converting Snapchat/Google traffic.</li>
+      <li><strong>Re-evaluate Snapchat &amp; Google ROI.</strong> Both convert under 1% in every period — question whether they deserve their old budget at all.</li>
+      <li><strong>Hold TikTok steady.</strong> It's roughly flat week-over-week and converting at its best level of the month — no urgent action, monitor.</li>
+    </ul>
+  </div>
+
+  <footer>Source: GA4 "Noya" funnel exploration exports — current week Jun 15–21 vs three prior periods (May 15–21, May 31–Jun 6, Jun 7–14), split by session source. Purchase-stage abandonment not reported by GA4 (final step).</footer>
+
+</body>
+</html>
